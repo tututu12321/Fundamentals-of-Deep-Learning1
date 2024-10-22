@@ -1,0 +1,74 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 目的関数: f(x, y) = x^2 + y^2
+# Target function: f(x, y) = x^2 + y^2
+def function(x, y):
+    return x**2 + y**2
+
+# 目的関数の勾配: df/dx = 2x, df/dy = 2y
+# Gradient of the target function: df/dx = 2x, df/dy = 2y
+def gradient(x, y):
+    df_dx = 2 * x
+    df_dy = 2 * y
+    return np.array([df_dx, df_dy])
+
+# 確率的勾配降下法(SGD)
+# Stochastic Gradient Descent (SGD)
+def stochastic_gradient_descent(starting_point, learning_rate, n_iterations):
+    # 初期化
+    # Initialize
+    x_values = [starting_point[0]]
+    y_values = [starting_point[1]]
+    
+    # 初期点
+    # Starting point
+    point = np.array(starting_point)
+    
+    # SGDの反復
+    # SGD iterations
+    for i in range(n_iterations):
+        grad = gradient(point[0], point[1])
+        
+        # 点を更新: 新しい点 = 現在の点 - 学習率 * 勾配
+        # Update point: new_point = current_point - learning_rate * gradient
+        point = point - learning_rate * grad
+        
+        # 結果を保存
+        # Save results
+        x_values.append(point[0])
+        y_values.append(point[1])
+        
+    return np.array(x_values), np.array(y_values)
+
+# 初期値、学習率、反復回数
+# Initial values, learning rate, number of iterations
+starting_point = [4.0, 4.0]
+learning_rate = 0.1
+n_iterations = 30
+
+# SGDを実行
+# Perform SGD
+x_vals, y_vals = stochastic_gradient_descent(starting_point, learning_rate, n_iterations)
+
+# 結果をプロット
+# Plot results
+x = np.linspace(-5, 5, 400)
+y = np.linspace(-5, 5, 400)
+X, Y = np.meshgrid(x, y)
+Z = function(X, Y)
+
+plt.figure(figsize=(8, 6))
+plt.contour(X, Y, Z, levels=20, cmap='jet')
+plt.plot(x_vals, y_vals, 'ro-', label='SGD Path')
+plt.title('SGD Optimization of f(x, y) = x^2 + y^2')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 最終結果の表示
+# Display final result
+print(f"最終点: x = {x_vals[-1]}, y = {y_vals[-1]}")
+print(f"最終の関数値: f(x, y) = {function(x_vals[-1], y_vals[-1])}")
