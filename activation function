@@ -1,0 +1,72 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# シグモイド関数
+# Sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# シグモイド関数の微分
+# Derivative of sigmoid function
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# ReLU関数
+# ReLU function
+def relu(x):
+    return np.maximum(0, x)
+
+# ReLU関数の微分
+# Derivative of ReLU function
+def relu_derivative(x):
+    return np.where(x > 0, 1, 0)
+
+# tanh関数
+# Tanh function
+def tanh(x):
+    return np.tanh(x)
+
+# tanh関数の微分
+# Derivative of tanh function
+def tanh_derivative(x):
+    return 1 - np.tanh(x) ** 2
+
+# 活性化関数をプロットする関数
+# Function to plot activation functions
+def plot_activation_functions(x_values):
+    # シグモイド、ReLU、tanh関数の出力
+    sigmoid_output = sigmoid(x_values)
+    relu_output = relu(x_values)
+    tanh_output = tanh(x_values)
+
+    # プロット
+    plt.figure(figsize=(12, 8))
+
+    # シグモイド関数のプロット
+    plt.subplot(3, 1, 1)
+    plt.plot(x_values, sigmoid_output, label="Sigmoid", color="blue")
+    plt.title("Sigmoid Function")
+    plt.grid(True)
+
+    # ReLU関数のプロット
+    plt.subplot(3, 1, 2)
+    plt.plot(x_values, relu_output, label="ReLU", color="green")
+    plt.title("ReLU Function")
+    plt.grid(True)
+
+    # tanh関数のプロット
+    plt.subplot(3, 1, 3)
+    plt.plot(x_values, tanh_output, label="Tanh", color="red")
+    plt.title("Tanh Function")
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+# テスト用の範囲
+# Range for testing
+x_values = np.linspace(-5, 5, 400)
+
+# 活性化関数をプロット
+# Plot activation functions
+plot_activation_functions(x_values)
