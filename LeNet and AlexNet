@@ -1,0 +1,83 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+# LeNetの定義
+class LeNet(nn.Module):
+    def __init__(self):
+        super(LeNet, self).__init__()
+        # 畳み込み層1 (入力1チャネル、出力6チャネル、5x5フィルター)
+        self.conv1 = nn.Conv2d(1, 6, kernel_size=5)
+        # 畳み込み層2 (6チャネル入力、出力16チャネル、5x5フィルター)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
+        # 全結合層 (16*5*5入力, 120出力)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        # 全結合層 (120入力, 84出力)
+        self.fc2 = nn.Linear(120, 84)
+        # 全結合層 (84入力, 10出力)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))  # 畳み込み + ReLU
+        x = F.max_pool2d(x, 2)  # プーリング層
+        x = F.relu(self.conv2(x))  # 畳み込み + ReLU
+        x = F.max_pool2d(x, 2)  # プーリング層
+        x = x.view(-1, 16 * 5 * 5)  # データをフラット化
+        x = F.relu(self.fc1(x))  # 全結合層 + ReLU
+        x = F.relu(self.fc2(x))  # 全結合層 + ReLU
+        x = self.fc3(x)  # 全結合層
+        return x
+
+# AlexNetの定義
+class AlexNet(nn.Module):
+    def __init__(self):
+        super(AlexNet, self).__init__()
+        # 畳み込み層1 (3入力チャネル、64出力チャネル、11x11フィルター、ストライド4、パディング2)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2)
+        # 畳み込み層2 (64入力チャネル、192出力チャネル、5x5フィルター、パディング2)
+        self.conv2 = nn.Conv2d(64, 192, kernel_size=5, padding=2)
+        # 畳み込み層3 (192入力チャネル、384出力チャネル、3x3フィルター、パディング1)
+        self.conv3 = nn.Conv2d(192, 384, kernel_size=3, padding=1)
+        # 畳み込み層4 (384入力チャネル、256出力チャネル、3x3フィルター、パディング1)
+        self.conv4 = nn.Conv2d(384, 256, kernel_size=3, padding=1)
+        # 畳み込み層5 (256入力チャネル、256出力チャネル、3x3フィルター、パディング1)
+        self.conv5 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        # 全結合層1 (256*6*6 -> 4096)
+        self.fc1 = nn.Linear(256 * 6 * 6, 4096)
+        # 全結合層2 (4096 -> 4096)
+        self.fc2 = nn.Linear(4096, 4096)
+        # 全結合層3 (4096 -> 1000)
+        self.fc3 = nn.Linear(4096, 1000)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))  # 畳み込み + ReLU
+        x = F.max_pool2d(x, kernel_size=3, stride=2)  # プーリング層
+        x = F.relu(self.conv2(x))  # 畳み込み + ReLU
+        x = F.max_pool2d(x, kernel_size=3, stride=2)  # プーリング層
+        x = F.relu(self.conv3(x))  # 畳み込み + ReLU
+        x = F.relu(self.conv4(x))  # 畳み込み + ReLU
+        x = F.relu(self.conv5(x))  # 畳み込み + ReLU
+        x = F.max_pool2d(x, kernel_size=3, stride=2)  # プーリング層
+        x = x.view(-1, 256 * 6 * 6)  # フラット化
+        x = F.relu(self.fc1(x))  # 全結合層 + ReLU
+        x = F.dropout(x, 0.5)  # ドロップアウト
+        x = F.relu(self.fc2(x))  # 全結合層 + ReLU
+        x = F.dropout(x, 0.5)  # ドロップアウト
+        x = self.fc3(x)  # 全結合層
+        return x
+
+# モデルの初期化
+lenet_model = LeNet()
+alexnet_model = AlexNet()
+
+# テスト入力の生成 (LeNetはグレースケール画像、AlexNetはRGB画像)
+lenet_input = torch.randn(1, 1, 32, 32)  # 1チャネル、32x32画像 (LeNet用)
+alexnet_input = torch.randn(1, 3, 224, 224)  # 3チャネル、224x224画像 (AlexNet用)
+
+# LeNetの順伝播
+lenet_output = lenet_model(lenet_input)
+print("LeNet Output:", lenet_output)
+
+# AlexNetの順伝播
+alexnet_output = alexnet_model(alexnet_input)
+print("AlexNet Output:", alexnet_output)
