@@ -1,0 +1,97 @@
+import numpy as np
+
+# シグモイド関数とその微分
+# Sigmoid function and its derivative
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# 二乗誤差損失関数 (MSE)
+# Mean Squared Error (MSE) Loss Function
+def mse_loss(y_true, y_pred):
+    return np.mean((y_true - y_pred) ** 2)
+
+# ニューラルネットワークのクラス
+# Neural Network Class
+class SimpleNeuralNetwork:
+    def __init__(self, input_size, hidden_size, output_size):
+        # 重みの初期化 (ランダム)
+        # Initialize weights randomly
+        self.weights_input_hidden = np.random.randn(input_size, hidden_size)
+        self.weights_hidden_output = np.random.randn(hidden_size, output_size)
+
+    # フォワードパス (入力 -> 隠れ層 -> 出力)
+    # Forward pass (Input -> Hidden Layer -> Output)
+    def forward(self, X):
+        # 隠れ層の計算 (Hidden Layer)
+        self.hidden_input = np.dot(X, self.weights_input_hidden)
+        self.hidden_output = sigmoid(self.hidden_input)
+
+        # 出力層の計算 (Output Layer)
+        self.output_input = np.dot(self.hidden_output, self.weights_hidden_output)
+        self.output = sigmoid(self.output_input)
+        return self.output
+
+    # バックプロパゲーションと重みの更新
+    # Backpropagation and Weight Update
+    def backpropagation(self, X, y, learning_rate):
+        # 出力層の誤差 (Output layer error)
+        output_error = y - self.output
+        output_delta = output_error * sigmoid_derivative(self.output)
+
+        # 隠れ層の誤差 (Hidden layer error)
+        hidden_error = np.dot(output_delta, self.weights_hidden_output.T)
+        hidden_delta = hidden_error * sigmoid_derivative(self.hidden_output)
+
+        # 重みの更新 (Weight updates)
+        self.weights_hidden_output += np.dot(self.hidden_output.T, output_delta) * learning_rate
+        self.weights_input_hidden += np.dot(X.T, hidden_delta) * learning_rate
+
+    # トレーニング関数 (エポックごとに更新)
+    # Training function (Updates every epoch)
+    def train(self, X, y, epochs, batch_size, learning_rate):
+        n_samples = X.shape[0]
+        for epoch in range(epochs):
+            # ミニバッチ (Mini-batches)
+            for i in range(0, n_samples, batch_size):
+                X_batch = X[i:i + batch_size]
+                y_batch = y[i:i + batch_size]
+
+                # フォワードパスとバックプロパゲーション
+                self.forward(X_batch)
+                self.backpropagation(X_batch, y_batch, learning_rate)
+
+            # エポックごとに損失を表示
+            # Display loss every epoch
+            if (epoch + 1) % 100 == 0:
+                loss = mse_loss(y, self.forward(X))
+                print(f"Epoch {epoch+1}, Loss: {loss}")
+
+# ダミーデータの作成 (入力と出力)
+# Create dummy data (input and output)
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])  # XOR problem inputs
+y = np.array([[0], [1], [1], [0]])              # XOR problem outputs
+
+# ハイパーパラメータ
+# Hyperparameters
+input_size = 2
+hidden_size = 2
+output_size = 1
+learning_rate = 0.1
+epochs = 10000
+batch_size = 4
+
+# ニューラルネットワークのインスタンスを作成
+# Create the neural network instance
+nn = SimpleNeuralNetwork(input_size, hidden_size, output_size)
+
+# トレーニング (Training)
+nn.train(X, y, epochs, batch_size, learning_rate)
+
+# トレーニング後の予測
+# Prediction after training
+print("\nPredictions after training:")
+for i in range(len(X)):
+    print(f"Input: {X[i]}, Predicted Output: {nn.forward(X[i])}, Actual Output: {y[i]}")
