@@ -1,0 +1,77 @@
+import numpy as np
+
+# シグモイド関数
+# Sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# シグモイド関数の微分
+# Derivative of the sigmoid function
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# 順伝播関数
+# Forward propagation function
+def forward_propagation(X, weights_input_hidden, weights_hidden_output):
+    # 入力層から隠れ層への信号
+    # Signal from input to hidden layer
+    hidden_input = np.dot(X, weights_input_hidden)
+    hidden_output = sigmoid(hidden_input)
+
+    # 隠れ層から出力層への信号
+    # Signal from hidden to output layer
+    final_input = np.dot(hidden_output, weights_hidden_output)
+    final_output = sigmoid(final_input)
+
+    return hidden_output, final_output
+
+# 連鎖律を使用した誤差逆伝播関数
+# Backpropagation using chain rule
+def backpropagation(X, y, hidden_output, final_output, weights_input_hidden, weights_hidden_output, learning_rate=0.1):
+    # 出力層の誤差
+    # Error in the output layer
+    error = y - final_output
+
+    # 出力層における勾配（連鎖律適用）
+    # Gradient at output layer (applying chain rule)
+    d_output = error * sigmoid_derivative(final_output)
+
+    # 隠れ層の誤差（連鎖律適用）
+    # Error at hidden layer (applying chain rule)
+    error_hidden_layer = d_output.dot(weights_hidden_output.T)
+    d_hidden = error_hidden_layer * sigmoid_derivative(hidden_output)
+
+    # 重みの更新
+    # Update weights
+    weights_hidden_output += hidden_output.T.dot(d_output) * learning_rate
+    weights_input_hidden += X.T.dot(d_hidden) * learning_rate
+
+    return weights_input_hidden, weights_hidden_output
+
+# サンプルデータ
+# Sample data
+X = np.array([[0.5, 1.0]])  # 入力データ
+y = np.array([[1.0]])  # 出力データ
+
+# 重みの初期化
+# Initialize weights
+input_size = 2
+hidden_size = 2
+output_size = 1
+weights_input_hidden = np.random.rand(input_size, hidden_size)
+weights_hidden_output = np.random.rand(hidden_size, output_size)
+
+# 順伝播
+# Forward propagation
+hidden_output, final_output = forward_propagation(X, weights_input_hidden, weights_hidden_output)
+
+# 誤差逆伝播
+# Backpropagation
+weights_input_hidden, weights_hidden_output = backpropagation(
+    X, y, hidden_output, final_output, weights_input_hidden, weights_hidden_output
+)
+
+# 結果表示
+# Display results
+print("更新後の入力層-隠れ層間の重み: \n", weights_input_hidden)
+print("更新後の隠れ層-出力層間の重み: \n", weights_hidden_output)
