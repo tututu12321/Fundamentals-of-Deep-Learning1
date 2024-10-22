@@ -1,0 +1,30 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+# 畳み込みパラメータ
+input_size = (7, 7)  # 入力サイズ (7x7)
+filter_size = (3, 3)  # フィルターサイズ (3x3)
+padding = 0  # パディング 0
+stride = 2  # ストライド 2
+
+# 出力サイズの計算 (パディング: 0、ストライド: 2 の場合)
+output_height = (input_size[0] - filter_size[0]) // stride + 1
+output_width = (input_size[1] - filter_size[1]) // stride + 1
+
+# 入力マトリックスの作成
+input_matrix = np.random.rand(input_size[0], input_size[1])
+
+# 畳み込み操作を行う場所を示すためのプロット
+fig, ax = plt.subplots()
+ax.imshow(input_matrix, cmap='gray')
+
+# フィルターがスライドする位置にフィルター枠を描画
+for i in range(0, input_size[0] - filter_size[0] + 1, stride):
+    for j in range(0, input_size[1] - filter_size[1] + 1, stride):
+        rect = patches.Rectangle((j, i), filter_size[1], filter_size[0], linewidth=1, edgecolor='r', facecolor='none')
+        ax.add_patch(rect)
+
+# 出力サイズの情報を表示
+plt.title(f"Input Size: {input_size}, Filter Size: {filter_size}, Stride: {stride}, Output Size: ({output_height}, {output_width})")
+plt.show()
