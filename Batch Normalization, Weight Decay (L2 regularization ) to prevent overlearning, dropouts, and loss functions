@@ -1,0 +1,76 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Flatten
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import SparseCategoricalCrossentropy
+from tensorflow.keras.callbacks import EarlyStopping
+
+# MNISTデータセットのロード
+# Load the MNIST dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# データの前処理（正規化）
+# Data preprocessing (Normalization)
+x_train = x_train.astype('float32') / 255.0
+x_test = x_test.astype('float32') / 255.0
+
+# シンプルなニューラルネットワークの構築
+# Construct a simple neural network
+def build_model():
+    model = Sequential()
+    model.add(Flatten(input_shape=(28, 28)))  # 28x28ピクセルをフラットに変換
+    model.add(Dense(256, activation='relu', kernel_regularizer=l2(0.001)))  # Weight Decay (L2正則化)
+    model.add(BatchNormalization())  # Batch Normalization
+    model.add(Dropout(0.5))  # Dropout (50%のニューロンを無効化)
+    
+    model.add(Dense(128, activation='relu', kernel_regularizer=l2(0.001)))  # 2層目
+    model.add(BatchNormalization())  # Batch Normalization
+    model.add(Dropout(0.5))  # Dropout
+    
+    model.add(Dense(64, activation='relu', kernel_regularizer=l2(0.001)))  # 3層目
+    model.add(BatchNormalization())  # Batch Normalization
+    model.add(Dropout(0.5))  # Dropout
+    
+    model.add(Dense(10, activation='softmax'))  # 出力層（10クラス分類）
+    
+    return model
+
+# モデルのコンパイル
+# Compile the model
+model = build_model()
+model.compile(optimizer=Adam(), 
+              loss=SparseCategoricalCrossentropy(),  # 損失関数
+              metrics=['accuracy'])
+
+# 過学習を防ぐためのEarlyStopping
+# Early stopping to prevent overfitting
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+
+# モデルの学習
+# Train the model
+history = model.fit(x_train, y_train, 
+                    epochs=20, 
+                    batch_size=128, 
+                    validation_split=0.2, 
+                    callbacks=[early_stopping], 
+                    verbose=2)
+
+# テストデータで評価
+# Evaluate on the test set
+test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
+print(f"テスト精度: {test_acc:.4f}")
+
+# 学習曲線のプロット
+# Plot training history
+plt.figure(figsize=(10, 6))
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Training and Validation Loss with Weight Decay, Batch Normalization, and Dropout')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.grid(True)
+plt.show()
