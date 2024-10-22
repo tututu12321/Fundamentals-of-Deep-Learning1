@@ -1,0 +1,73 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten
+from tensorflow.keras.optimizers import SGD, Adagrad, Adam
+
+# MNISTデータセットのロード
+# Load the MNIST dataset
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# データの正規化 (0-255のピクセル値を0-1に変換)
+# Normalize data (Convert pixel values from 0-255 to 0-1)
+x_train = x_train.astype('float32') / 255.0
+x_test = x_test.astype('float32') / 255.0
+
+# ラベルをOne-Hotエンコード
+# One-hot encode the labels
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+# シンプルなニューラルネットワークモデルを定義
+# Define a simple neural network model
+def build_model():
+    model = Sequential([
+        Flatten(input_shape=(28, 28)),
+        Dense(128, activation='relu'),
+        Dense(10, activation='softmax')
+    ])
+    return model
+
+# 最適化アルゴリズムごとの学習を行う関数
+# Train the model using different optimization algorithms
+def train_with_optimizer(optimizer_name, optimizer):
+    model = build_model()
+    model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+    
+    history = model.fit(x_train, y_train, epochs=5, batch_size=128, validation_split=0.2, verbose=2)
+    
+    # テストセットでの評価
+    # Evaluate on the test set
+    test_loss, test_acc = model.evaluate(x_test, y_test, verbose=0)
+    
+    print(f"{optimizer_name} テスト精度: {test_acc:.4f}")
+    
+    # 学習曲線のプロット
+    # Plot the learning curve
+    plt.plot(history.history['accuracy'], label=f'{optimizer_name} - Training Accuracy')
+    plt.plot(history.history['val_accuracy'], label=f'{optimizer_name} - Validation Accuracy')
+
+# 最適化アルゴリズムを設定
+# Set up the optimizers
+optimizers = {
+    "SGD + Momentum": SGD(learning_rate=0.01, momentum=0.9),
+    "AdaGrad": Adagrad(learning_rate=0.01),
+    "Adam": Adam(learning_rate=0.001)
+}
+
+# 各最適化アルゴリズムでモデルを訓練
+# Train the model with each optimizer
+plt.figure(figsize=(10, 6))
+for optimizer_name, optimizer in optimizers.items():
+    train_with_optimizer(optimizer_name, optimizer)
+
+# グラフの設定
+# Final plot settings
+plt.title('Training and Validation Accuracy for Different Optimizers')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.grid(True)
+plt.show()
