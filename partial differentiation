@@ -1,0 +1,106 @@
+import numpy as np
+import sympy as sp
+import matplotlib.pyplot as plt
+
+# 変数と関数 f(x, y) の定義
+# Define symbols and the function f(x, y)
+x, y = sp.symbols('x y')
+f = x**2 * y + y**2
+
+# 偏微分の計算
+# Compute partial derivatives
+df_dx = sp.diff(f, x)
+df_dy = sp.diff(f, y)
+
+print(f"f(x, y) の x に関する偏微分: {df_dx}")
+print(f"f(x, y) の y に関する偏微分: {df_dy}")
+
+# 勾配ベクトル（偏微分のベクトル）
+# Gradient vector (vector of partial derivatives)
+gradient = [df_dx, df_dy]
+print(f"f(x, y) の勾配ベクトル: {gradient}")
+
+# 全微分の計算
+# Compute the total differential
+dx, dy = sp.symbols('dx dy')  # 微小量を定義 / Define infinitesimal quantities
+df = df_dx * dx + df_dy * dy  # 全微分の計算 / Calculate total differential
+print(f"f(x, y) の全微分: {df}")
+
+# 数式を数値計算可能な関数に変換
+# Convert symbolic expressions to numerical functions
+f_lambdified = sp.lambdify((x, y), f, "numpy")
+df_dx_lambdified = sp.lambdify((x, y), df_dx, "numpy")
+df_dy_lambdified = sp.lambdify((x, y), df_dy, "numpy")
+
+# プロット用のメッシュグリッドを作成
+# Create a meshgrid for plotting
+x_vals = np.linspace(-2, 2, 400)
+y_vals = np.linspace(-2, 2, 400)
+X, Y = np.meshgrid(x_vals, y_vals)
+
+# グリッド上で関数と偏微分の値を評価
+# Evaluate the function and its derivatives over the grid
+Z = f_lambdified(X, Y)
+df_dx_vals = df_dx_lambdified(X, Y)
+df_dy_vals = df_dy_lambdified(X, Y)
+
+# 関数 f(x, y) のコンタープロット
+# Plot the function f(x, y)
+plt.figure(figsize=(12, 8))
+plt.contourf(X, Y, Z, 20, cmap='RdYlBu')
+plt.colorbar(label='f(x, y) = x^2 * y + y^2')
+plt.title('Contour plot of f(x, y) = $x^2 * y + y^2$')
+plt.xlabel('x')
+plt.ylabel('y')
+
+# 勾配ベクトル場のプロット（クイバープロット）
+# Plot the gradient field (quiver plot)
+plt.quiver(X, Y, df_dx_vals, df_dy_vals, color='black')
+plt.title('Gradient field of f(x, y)')
+plt.show()
+
+# 特定の点 (x0, y0) における全微分を可視化
+# Now let's illustrate the total differential at a specific point (x0, y0)
+x0, y0 = 1, 1  # 例として点 (x0, y0)
+# Example point (x0, y0)
+df_dx_at_point = df_dx_lambdified(x0, y0)
+df_dy_at_point = df_dy_lambdified(x0, y0)
+
+# 点 (x0, y0) における全微分
+# Total differential at point (x0, y0)
+def total_differential(x0, y0, dx, dy):
+    return df_dx_at_point * dx + df_dy_at_point * dy
+
+# 関数を再びプロットし、線形近似（全微分）を示す
+# Plot the function again with the linear approximation (total differential)
+dx_vals = np.linspace(-0.5, 0.5, 20)
+dy_vals = np.linspace(-0.5, 0.5, 20)
+
+# 点 (x0, y0) における全微分の計算
+# Calculate the total differential at (x0, y0)
+X_approx, Y_approx = np.meshgrid(dx_vals + x0, dy_vals + y0)
+Z_approx = f_lambdified(x0, y0) + total_differential(x0, y0, X_approx - x0, Y_approx - y0)
+
+# 関数のプロットと全微分の近似
+# Plot original function and total differential approximation
+fig = plt.figure(figsize=(12, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+# 元の関数の表面プロット
+# Surface plot of the original function
+ax.plot_surface(X, Y, Z, cmap='RdYlBu', alpha=0.6, edgecolor='none')
+
+# (x0, y0) 周辺の全微分（線形近似）の表面プロット
+# Surface plot of the total differential (linear approximation) around (x0, y0)
+ax.plot_surface(X_approx, Y_approx, Z_approx, cmap='coolwarm', alpha=0.6)
+
+# 点 (x0, y0) を強調表示
+# Highlight the point (x0, y0)
+ax.scatter(x0, y0, f_lambdified(x0, y0), color='red', s=100, label='Point (x0, y0)')
+ax.set_title('Total Differential Approximation at (x0, y0)')
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('f(x, y)')
+
+plt.legend()
+plt.show()
