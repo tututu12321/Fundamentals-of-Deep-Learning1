@@ -1,0 +1,89 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset
+import numpy as np
+
+# 1. 前処理、後処理、ネットワークモデルの入出力確認
+# 2. Datasetの作成
+class MyDataset(Dataset):
+    def __init__(self, data, labels):
+        self.data = torch.FloatTensor(data)   # ここでTensorに変換
+        self.labels = torch.FloatTensor(labels)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx], self.labels[idx]
+
+# 仮のデータセットを作成
+data = np.random.rand(100, 10)   # 100個のサンプル、10次元入力
+labels = np.random.randint(0, 2, size=(100, 1))  # 2クラス分類のラベル
+
+# 3. DataLoaderの作成
+batch_size = 32
+dataset = MyDataset(data, labels)
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+# 4. ネットワークモデルの作成
+class MyModel(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(MyModel, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        return x
+
+# モデルのインスタンス化
+model = MyModel(input_size=10, hidden_size=32, output_size=1)
+
+# 5. 順伝搬(forward)の定義
+# 既にモデルの forward メソッド内で定義されている
+
+# 6. 損失関数の定義
+loss_fn = nn.BCEWithLogitsLoss()
+
+# 7. 最適化手法の設定
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# 8. 学習・検証の実施
+num_epochs = 10
+
+for epoch in range(num_epochs):
+    model.train()  # モデルを学習モードに設定
+    running_loss = 0.0
+    
+    for inputs, targets in dataloader:
+        # inputs と targets はすでに Tensor なので、変換は不要
+        # 順伝搬
+        outputs = model(inputs)
+        
+        # 損失の計算
+        loss = loss_fn(outputs, targets)
+        
+        # 勾配をリセット
+        optimizer.zero_grad()
+        
+        # 逆伝搬
+        loss.backward()
+        
+        # パラメータの更新
+        optimizer.step()
+        
+        running_loss += loss.item()
+
+    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(dataloader):.4f}')
+
+# 9. テストデータで推論
+model.eval()  # モデルを評価モードに設定
+with torch.no_grad():
+    test_input = torch.FloatTensor(np.random.rand(1, 10))  # テスト用のサンプル
+    test_output = model(test_input)
+    prediction = torch.sigmoid(test_output)  # ロジットから確率への変換
+    print(f'Predicted probability: {prediction.item():.4f}')
