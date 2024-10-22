@@ -1,0 +1,28 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# 計算グラフの定義
+G = nx.DiGraph()
+
+# ノードの追加
+G.add_node('x')
+G.add_node('y')
+G.add_node('w')
+G.add_node('x + y')
+G.add_node('z = (x + y) * w')
+
+# エッジ (矢印) の追加
+G.add_edges_from([('x', 'x + y'), ('y', 'x + y')])  # x + y
+G.add_edges_from([('x + y', 'z = (x + y) * w'), ('w', 'z = (x + y) * w')])  # (x + y) * w
+
+# グラフの描画
+pos = nx.spring_layout(G)  # ノードの配置
+nx.draw(G, pos, with_labels=True, node_size=2000, node_color='skyblue', font_size=10, font_weight='bold', arrows=True, arrowstyle='-|>', arrowsize=20)
+
+# 矢印のラベル (計算式)
+edge_labels = {('x', 'x + y'): '+', ('y', 'x + y'): '+', ('x + y', 'z = (x + y) * w'): '*', ('w', 'z = (x + y) * w'): '*'}
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+
+# グラフを表示
+plt.title("Computation Graph")
+plt.show()
