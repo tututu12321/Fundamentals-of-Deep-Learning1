@@ -1,0 +1,70 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+# データの生成（シンプルな二次関数のデータを作成）
+x_train = torch.linspace(-5, 5, 100).reshape(-1, 1)  # -5から5までの100点
+y_train = 3 * x_train**2 + 2 + torch.randn(x_train.size()) * 2  # 3x^2 + 2 + ノイズ
+
+# 1. モデル定義（単純な全結合ネットワーク）
+class SimpleModel(nn.Module):
+    def __init__(self):
+        super(SimpleModel, self).__init__()
+        self.fc1 = nn.Linear(1, 10)  # 1次元入力 -> 10ユニットの隠れ層
+        self.fc2 = nn.Linear(10, 1)  # 10ユニット -> 1次元出力
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+model = SimpleModel()
+
+# 2. ハイパーパラメータ設定
+learning_rate = 0.01  # 学習率
+num_epochs = 1000     # エポック数
+batch_size = 20       # バッチサイズ
+
+# 3. 損失関数と最適化手法（MSE：平均二乗誤差）
+criterion = nn.MSELoss()  # 損失関数: 平均二乗誤差
+optimizer = optim.SGD(model.parameters(), lr=learning_rate)  # SGD: 確率的勾配降下法
+
+# データローダーを使用してデータをミニバッチで処理
+train_data = torch.utils.data.TensorDataset(x_train, y_train)
+train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+
+# 4. 訓練ループ
+for epoch in range(num_epochs):
+    running_loss = 0.0
+    for inputs, targets in train_loader:
+        # 順伝搬 (forward)
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        
+        # 勾配をリセット
+        optimizer.zero_grad()
+        
+        # 逆伝搬 (backward)
+        loss.backward()
+        
+        # 最適化 (パラメータの更新)
+        optimizer.step()
+        
+        running_loss += loss.item()
+
+    # 100エポックごとに損失を表示
+    if (epoch + 1) % 100 == 0:
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss / len(train_loader):.4f}')
+
+# 5. 学習結果のプロット（学習済みモデルで予測）
+import matplotlib.pyplot as plt
+
+model.eval()  # 評価モード
+with torch.no_grad():
+    y_pred = model(x_train)
+
+# 元データとモデルによる予測をプロット
+plt.scatter(x_train.numpy(), y_train.numpy(), label='Data')
+plt.plot(x_train.numpy(), y_pred.numpy(), 'r-', label='Fitted curve')
+plt.legend()
+plt.show()
