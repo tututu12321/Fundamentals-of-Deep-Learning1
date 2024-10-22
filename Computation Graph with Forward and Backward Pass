@@ -1,0 +1,69 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# 順伝播計算
+def forward(x, y, w, v):
+    q = x + y        # q = x + y
+    r = q * w        # r = q * w
+    z = r + v        # z = r + v
+    return q, r, z
+
+# 逆伝播計算 (微分値の計算)
+def backward(x, y, w, v, dz):
+    dz_dr = 1.0      # dz/dr = 1
+    dz_dv = 1.0      # dz/dv = 1
+    dr_dq = w        # dr/dq = w
+    dr_dw = x + y    # dr/dw = q
+    dq_dx = 1.0      # dq/dx = 1
+    dq_dy = 1.0      # dq/dy = 1
+    dz_dq = dz * dz_dr * dr_dq  # dz/dq
+    dx = dz_dq * dq_dx  # dz/dx
+    dy = dz_dq * dq_dy  # dz/dy
+    dw = dz * dz_dr * dr_dw  # dz/dw
+    dv = dz * dz_dv  # dz/dv
+    return dx, dy, dw, dv
+
+# パラメータの定義
+x, y, w, v = 2.0, 3.0, 4.0, 5.0
+q, r, z = forward(x, y, w, v)
+dz = 1.0  # 出力ノードの勾配
+dx, dy, dw, dv = backward(x, y, w, v, dz)
+
+# 計算結果をノードラベルに追加
+nodes = {
+    'x': f'x={x}\n∂z/∂x={dx:.2f}',
+    'y': f'y={y}\n∂z/∂y={dy:.2f}',
+    'w': f'w={w}\n∂z/∂w={dw:.2f}',
+    'v': f'v={v}\n∂z/∂v={dv:.2f}',
+    'x + y': f'x + y = {q:.2f}',
+    '(x + y) * w': f'(x + y) * w = {r:.2f}',
+    'z': f'z = {z:.2f}'
+}
+
+# 計算グラフの作成
+G = nx.DiGraph()
+G.add_edges_from([('x', 'x + y'), ('y', 'x + y')])  # x + y
+G.add_edges_from([('x + y', '(x + y) * w'), ('w', '(x + y) * w')])  # (x + y) * w
+G.add_edges_from([('(x + y) * w', 'z'), ('v', 'z')])  # z
+
+# グラフの描画設定
+pos = nx.spring_layout(G, seed=42)  # ノード配置を固定するためのシードを設定
+plt.figure(figsize=(10, 6))  # グラフのサイズを調整
+
+# ノードの描画 (ラベル付き)
+nx.draw(G, pos, with_labels=True, labels=nodes, node_size=4000, node_color='skyblue', font_size=12, font_weight='bold', arrows=True, arrowstyle='-|>', arrowsize=20, edge_color='black')
+
+# エッジラベルの設定（計算内容）
+edge_labels = {
+    ('x', 'x + y'): '+',
+    ('y', 'x + y'): '+',
+    ('x + y', '(x + y) * w'): '*',
+    ('w', '(x + y) * w'): '*',
+    ('(x + y) * w', 'z'): '+',
+    ('v', 'z'): '+'
+}
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=12)
+
+# グラフの表示
+plt.title("Computation Graph with Forward and Backward Pass", fontsize=16)
+plt.show()
