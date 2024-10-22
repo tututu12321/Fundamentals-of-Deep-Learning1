@@ -1,0 +1,44 @@
+import numpy as np
+
+# ステップ関数（活性化関数）
+def step_function(x):
+    return 1 if x >= 0 else 0
+
+# パーセプトロンの出力計算
+def perceptron(x1, x2, weights, bias):
+    weighted_sum = weights[0] * x1 + weights[1] * x2 + bias
+    return step_function(weighted_sum)
+
+# XORゲートを実現するための2層パーセプトロン
+def xor_gate(x1, x2):
+    # 第一層: NANDゲート、ORゲート
+    nand_output = perceptron(x1, x2, weights=[-1, -1], bias=1.5)  # NANDゲート
+    or_output = perceptron(x1, x2, weights=[1, 1], bias=-0.5)    # ORゲート
+    
+    # 第二層: ANDゲート
+    xor_output = perceptron(nand_output, or_output, weights=[1, 1], bias=-1.5)  # ANDゲートでXORを実現
+    return xor_output
+
+# NANDゲートを実現するための2層パーセプトロン（隠れ層なし）
+def nand_gate(x1, x2):
+    return perceptron(x1, x2, weights=[-1, -1], bias=1.5)  # 単層でNANDゲート
+
+# テストデータ
+inputs = [
+    (0, 0),  # x1=0, x2=0
+    (0, 1),  # x1=0, x2=1
+    (1, 0),  # x1=1, x2=0
+    (1, 1)   # x1=1, x2=1
+]
+
+# XORゲートの出力
+print("XOR回路の出力 (多層パーセプトロン):")
+for x1, x2 in inputs:
+    output = xor_gate(x1, x2)
+    print(f"入力: ({x1}, {x2}) -> 出力: {output}")
+
+# NANDゲートの出力
+print("\nNAND回路の出力:")
+for x1, x2 in inputs:
+    output = nand_gate(x1, x2)
+    print(f"入力: ({x1}, {x2}) -> 出力: {output}")
