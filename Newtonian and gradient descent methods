@@ -1,0 +1,62 @@
+import numpy as np
+import sympy as sp
+import matplotlib.pyplot as plt
+
+# 1. ニュートン法 (Newton's Method)
+def newton_method(f, df, d2f, x0, tol=1e-6, max_iter=100):
+    x = x0
+    for i in range(max_iter):
+        f_val = f(x)
+        df_val = df(x)
+        d2f_val = d2f(x)
+
+        if abs(df_val) < tol:  # 微分が小さければ収束
+            print(f"Newton method converged at iteration {i}: x = {x}, f(x) = {f_val}")
+            break
+
+        x = x - df_val / d2f_val  # ニュートン法の更新ステップ
+    return x
+
+# 2. 勾配降下法 (Gradient Descent)
+def gradient_descent(f, df, x0, learning_rate=0.1, tol=1e-6, max_iter=100):
+    x = x0
+    for i in range(max_iter):
+        df_val = df(x)
+
+        if abs(df_val) < tol:  # 勾配が小さければ収束
+            print(f"Gradient descent converged at iteration {i}: x = {x}, f(x) = {f(x)}")
+            break
+
+        x = x - learning_rate * df_val  # 勾配降下法の更新ステップ
+    return x
+
+# 例: f(x) = x^2 - 4x + 4 の最小値を探す
+x_sym = sp.Symbol('x')
+f_sym = x_sym**2 - 4*x_sym + 4
+f = sp.lambdify(x_sym, f_sym)             # f(x) = x^2 - 4x + 4
+df = sp.lambdify(x_sym, sp.diff(f_sym))   # f'(x) = 2x - 4
+d2f = sp.lambdify(x_sym, sp.diff(f_sym, 2))  # f''(x) = 2
+
+# 初期値設定
+x0 = 0  # 初期値
+
+# ニュートン法の適用
+x_min_newton = newton_method(f, df, d2f, x0)
+print(f"Newton method result: x = {x_min_newton}, f(x) = {f(x_min_newton)}")
+
+# 勾配降下法の適用
+x_min_gd = gradient_descent(f, df, x0, learning_rate=0.1)
+print(f"Gradient descent result: x = {x_min_gd}, f(x) = {f(x_min_gd)}")
+
+# プロット
+x_vals = np.linspace(-2, 6, 400)
+y_vals = f(x_vals)
+
+plt.plot(x_vals, y_vals, label='f(x) = $x^2 - 4x + 4$')
+plt.scatter([x_min_newton], [f(x_min_newton)], color='red', label='Newton minimum', zorder=5)
+plt.scatter([x_min_gd], [f(x_min_gd)], color='blue', label='Gradient Descent minimum', zorder=5)
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.legend()
+plt.title('Newton Method and Gradient Descent')
+plt.show()
