@@ -1,0 +1,30 @@
+import numpy as np
+
+# ステップ関数（活性化関数）
+def step_function(x):
+    return 1 if x >= 0 else 0
+
+# 2入力のパーセプトロン
+def perceptron(x1, x2, weights, bias):
+    # 重み付き和（入力と重みの線形結合 + バイアス）
+    weighted_sum = weights[0] * x1 + weights[1] * x2 + bias
+    # ステップ関数を適用して出力を決定
+    return step_function(weighted_sum)
+
+# 重みとバイアス（しきい値）
+weights = [0.5, -0.6]  # 重み w1 = 0.5, w2 = -0.6
+bias = 0.1             # バイアス（しきい値）
+
+# 入力データ
+inputs = [
+    (0, 0),  # x1=0, x2=0
+    (0, 1),  # x1=0, x2=1
+    (1, 0),  # x1=1, x2=0
+    (1, 1)   # x1=1, x2=1
+]
+
+# 各入力に対するパーセプトロンの出力を表示
+print("2入力パーセプトロンの出力:")
+for x1, x2 in inputs:
+    output = perceptron(x1, x2, weights, bias)
+    print(f"入力: ({x1}, {x2}) -> 出力: {output}")
