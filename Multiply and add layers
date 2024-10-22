@@ -1,0 +1,88 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 乗算レイヤの定義
+class MultiplyLayer:
+    def __init__(self):
+        self.x = None
+        self.y = None
+
+    def forward(self, x, y):
+        self.x = x
+        self.y = y
+        return x * y
+
+    def backward(self, dout):
+        dx = dout * self.y  # xの勾配
+        dy = dout * self.x  # yの勾配
+        return dx, dy
+
+# 加算レイヤの定義
+class AddLayer:
+    def __init__(self):
+        pass
+
+    def forward(self, x, y):
+        return x + y
+
+    def backward(self, dout):
+        dx = dout  # 加算はそのまま勾配が流れる
+        dy = dout
+        return dx, dy
+
+# テスト用のデータ
+x = 5
+y = 10
+
+# 乗算レイヤのテスト
+mul_layer = MultiplyLayer()
+mul_forward = mul_layer.forward(x, y)
+print(f"乗算レイヤ - Forward: {x} * {y} = {mul_forward}")
+
+dout = 1  # 逆伝搬で使う勾配
+mul_dx, mul_dy = mul_layer.backward(dout)
+print(f"乗算レイヤ - Backward: dx={mul_dx}, dy={mul_dy}")
+
+# 加算レイヤのテスト
+add_layer = AddLayer()
+add_forward = add_layer.forward(x, y)
+print(f"加算レイヤ - Forward: {x} + {y} = {add_forward}")
+
+add_dx, add_dy = add_layer.backward(dout)
+print(f"加算レイヤ - Backward: dx={add_dx}, dy={add_dy}")
+
+# プロットのためのデータを作成
+x_values = np.linspace(0, 10, 100)
+y_values = np.linspace(0, 10, 100)
+
+# 乗算と加算の結果を格納するリスト
+mul_results = []
+add_results = []
+
+# 各入力に対して、乗算と加算の結果を計算
+for x, y in zip(x_values, y_values):
+    mul_results.append(mul_layer.forward(x, y))
+    add_results.append(add_layer.forward(x, y))
+
+# 結果のプロット
+plt.figure(figsize=(10, 5))
+
+# 乗算のプロット
+plt.subplot(1, 2, 1)
+plt.plot(x_values, mul_results, label='Multiplication: x * y')
+plt.title('Multiplication Layer Output')
+plt.xlabel('x')
+plt.ylabel('x * y')
+plt.legend()
+
+# 加算のプロット
+plt.subplot(1, 2, 2)
+plt.plot(x_values, add_results, label='Addition: x + y')
+plt.title('Addition Layer Output')
+plt.xlabel('x')
+plt.ylabel('x + y')
+plt.legend()
+
+# プロットを表示
+plt.tight_layout()
+plt.show()
