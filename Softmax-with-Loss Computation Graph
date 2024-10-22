@@ -1,0 +1,76 @@
+import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# ソフトマックス関数
+def softmax(z):
+    exp_z = np.exp(z - np.max(z))  # 数値安定化のために最大値を引く
+    return exp_z / np.sum(exp_z)
+
+# 交差エントロピー損失関数
+def cross_entropy_loss(y_true, y_pred):
+    return -np.sum(y_true * np.log(y_pred + 1e-7))  # logの内部が0になるのを防ぐための1e-7
+
+# 順伝播計算
+def forward(z, y_true):
+    y_pred = softmax(z)  # ソフトマックス出力
+    loss = cross_entropy_loss(y_true, y_pred)  # 交差エントロピー損失
+    return y_pred, loss
+
+# 逆伝播計算 (微分値の計算)
+def backward(y_true, y_pred):
+    dz = y_pred - y_true  # ソフトマックスと損失の逆伝播
+    return dz
+
+# サンプル入力 (logits) と正解ラベル
+z = np.array([2.0, 1.0, 0.1])  # ソフトマックスに入力する値
+y_true = np.array([1, 0, 0])   # 正解ラベル (one-hot vector)
+
+# 順伝播
+y_pred, loss = forward(z, y_true)
+
+# 逆伝播
+dz = backward(y_true, y_pred)
+
+# 計算結果の表示
+print(f"Logits (z): {z}")
+print(f"Softmax Output (y_pred): {y_pred}")
+print(f"Cross-Entropy Loss: {loss}")
+print(f"Backward pass (dz): {dz}")
+
+# 計算グラフの可視化
+G = nx.DiGraph()
+
+# ノードを追加
+G.add_node('z', label=f'z={z}')
+G.add_node('Softmax', label=f'Softmax(y_pred)={np.round(y_pred, 2)}')
+G.add_node('Loss', label=f'Loss={np.round(loss, 2)}')
+G.add_node('y_true', label=f'y_true={y_true}')
+G.add_node('dz', label=f'dz={np.round(dz, 2)}')
+
+# エッジを追加
+G.add_edges_from([('z', 'Softmax'), ('Softmax', 'Loss'), ('y_true', 'Loss')])
+G.add_edges_from([('Loss', 'dz')])
+
+# ノードラベル
+labels = nx.get_node_attributes(G, 'label')
+
+# グラフの描画設定
+pos = nx.spring_layout(G, seed=42)  # ノード配置を固定するためのシードを設定
+plt.figure(figsize=(10, 6))  # グラフのサイズを調整
+
+# ノードの描画 (ラベル付き)
+nx.draw(G, pos, with_labels=True, labels=labels, node_size=4000, node_color='skyblue', font_size=12, font_weight='bold', arrows=True, arrowstyle='-|>', arrowsize=20, edge_color='black')
+
+# エッジラベルの設定（計算内容）
+edge_labels = {
+    ('z', 'Softmax'): 'Softmax',
+    ('Softmax', 'Loss'): 'Cross-Entropy',
+    ('y_true', 'Loss'): 'True Label',
+    ('Loss', 'dz'): 'Backward Pass'
+}
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=12)
+
+# グラフの表示
+plt.title("Softmax-with-Loss Computation Graph", fontsize=16)
+plt.show()
