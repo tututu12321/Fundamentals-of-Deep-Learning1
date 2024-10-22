@@ -1,0 +1,48 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# シグモイド関数
+# Sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# シグモイド関数の微分
+# Derivative of the sigmoid function
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# プロット用の範囲を設定
+# Set up the range for plotting
+x_values = np.linspace(-10, 10, 400)
+
+# シグモイド関数の出力を計算
+# Calculate sigmoid output
+sigmoid_output = sigmoid(x_values)
+
+# シグモイド関数の微分を計算
+# Calculate derivative of the sigmoid function
+sigmoid_deriv = sigmoid_derivative(sigmoid_output)
+
+# シグモイド関数とその微分をプロット
+# Plot sigmoid function and its derivative
+plt.figure(figsize=(10, 6))
+
+# シグモイド関数のプロット
+# Plot sigmoid function
+plt.plot(x_values, sigmoid_output, label='Sigmoid Function', color='blue')
+
+# シグモイド関数の微分のプロット
+# Plot derivative of the sigmoid function
+plt.plot(x_values, sigmoid_deriv, label='Sigmoid Derivative', color='red', linestyle='--')
+
+# グラフのラベルとタイトル
+# Labels and title
+plt.title('Sigmoid Function and its Derivative')
+plt.xlabel('x')
+plt.ylabel('Value')
+plt.legend()
+plt.grid(True)
+
+# プロットを表示
+# Show plot
+plt.show()
