@@ -1,0 +1,85 @@
+import numpy as np
+
+# ソフトマックス関数の定義
+def softmax(x):
+    exp_x = np.exp(x - np.max(x))  # オーバーフロー対策で最大値を引く
+    return exp_x / np.sum(exp_x)
+
+# シグモイド関数の定義（隠れ層で使用）
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# シグモイド関数の微分
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# 3層ニューラルネットワーク
+class NeuralNetwork:
+    def __init__(self, input_size, hidden_size, output_size):
+        # 重みの初期化
+        self.weights_input_hidden = np.random.randn(input_size, hidden_size)
+        self.weights_hidden_output = np.random.randn(hidden_size, output_size)
+        # バイアスの初期化
+        self.bias_hidden = np.random.randn(hidden_size)
+        self.bias_output = np.random.randn(output_size)
+
+    # フォワードプロパゲーション
+    def forward(self, X):
+        # 隠れ層の計算
+        self.hidden_input = np.dot(X, self.weights_input_hidden) + self.bias_hidden
+        self.hidden_output = sigmoid(self.hidden_input)
+
+        # 出力層の計算
+        self.output_input = np.dot(self.hidden_output, self.weights_hidden_output) + self.bias_output
+        self.output = softmax(self.output_input)
+        
+        return self.output
+
+    # トレーニング関数（バックプロパゲーション）
+    def train(self, X, y, learning_rate, epochs):
+        for epoch in range(epochs):
+            # フォワードプロパゲーション
+            output = self.forward(X)
+
+            # 出力層の誤差と勾配
+            output_error = y - output
+            output_delta = output_error  # ソフトマックスとクロスエントロピーの組み合わせでは、この形になる
+
+            # 隠れ層の誤差と勾配
+            hidden_error = np.dot(output_delta, self.weights_hidden_output.T)
+            hidden_delta = hidden_error * sigmoid_derivative(self.hidden_output)
+
+            # 重みとバイアスの更新
+            self.weights_hidden_output += np.dot(self.hidden_output.T, output_delta) * learning_rate
+            self.bias_output += np.sum(output_delta, axis=0) * learning_rate
+            self.weights_input_hidden += np.dot(X.T, hidden_delta) * learning_rate
+            self.bias_hidden += np.sum(hidden_delta, axis=0) * learning_rate
+
+            if (epoch + 1) % 1000 == 0:
+                loss = -np.sum(y * np.log(output))
+                print(f"Epoch {epoch + 1}, Loss: {loss:.4f}")
+
+# ダミーデータでのトレーニングとテスト
+if __name__ == "__main__":
+    # 入力データ（XORのような非線形データ）
+    X = np.array([[0, 0],
+                  [0, 1],
+                  [1, 0],
+                  [1, 1]])
+
+    # 出力データ（XOR問題を解くためのターゲット出力）
+    y = np.array([[1, 0],  # クラス0 (XORでの0)
+                  [0, 1],  # クラス1 (XORでの1)
+                  [0, 1],  # クラス1 (XORでの1)
+                  [1, 0]]) # クラス0 (XORでの0)
+
+    # ニューラルネットワークのインスタンスを作成
+    nn = NeuralNetwork(input_size=2, hidden_size=4, output_size=2)
+
+    # モデルのトレーニング
+    nn.train(X, y, learning_rate=0.1, epochs=10000)
+
+    # テストデータに対する予測
+    for i in range(len(X)):
+        output = nn.forward(X[i])
+        print(f"入力: {X[i]}, 予測された出力: {output}, クラス: {np.argmax(output)}")
