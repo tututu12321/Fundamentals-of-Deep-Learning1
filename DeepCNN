@@ -1,0 +1,116 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+
+# Heの初期値を設定するための関数
+def init_weights(m):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        nn.init.kaiming_normal_(m.weight)
+
+# ディープなCNNモデルの定義
+class DeepCNN(nn.Module):
+    def __init__(self):
+        super(DeepCNN, self).__init__()
+        # 畳み込み層 (3x3 フィルター, 前層からのチャネル数が16、16、32、32、64、64と増加)
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(16, 16, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
+        self.conv5 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.conv6 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        
+        # プーリング層 (MaxPooling)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        # 全結合層
+        self.fc1 = nn.Linear(64 * 3 * 3, 128)
+        self.fc2 = nn.Linear(128, 10)  # MNISTは10クラス分類
+        
+        # Dropoutレイヤ
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, x):
+        # 畳み込み + ReLU + プーリング
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.relu(self.conv3(x)))
+        x = self.pool(F.relu(self.conv4(x)))
+        x = self.pool(F.relu(self.conv5(x)))
+        x = self.pool(F.relu(self.conv6(x)))
+
+        # フラット化
+        x = x.view(-1, 64 * 3 * 3)
+
+        # 全結合層 + Dropout + ReLU
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        
+        # 出力層 (ソフトマックスは適用しない、後でクロスエントロピー損失関数に渡す)
+        x = self.fc2(x)
+        return x
+
+# データセットとデータローダーの準備 (MNIST用)
+transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+
+train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
+test_dataset = datasets.MNIST(root='./data', train=False, transform=transform, download=True)
+
+train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=True)
+test_loader = DataLoader(dataset=test_dataset, batch_size=1000, shuffle=False)
+
+# モデルの初期化、Heの初期化を適用
+model = DeepCNN()
+model.apply(init_weights)
+
+# 損失関数と最適化手法の定義 (クロスエントロピー損失とAdam)
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# モデルのトレーニング
+def train(model, device, train_loader, optimizer, epoch):
+    model.train()
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        
+        # パラメータの更新
+        optimizer.zero_grad()  # 勾配の初期化
+        output = model(data)  # 順伝播
+        loss = criterion(output, target)  # 損失計算
+        loss.backward()  # 逆伝播
+        optimizer.step()  # パラメータ更新
+
+        if batch_idx % 100 == 0:
+            print(f"Train Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}]\tLoss: {loss.item():.6f}")
+
+# モデルのテスト
+def test(model, device, test_loader):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            test_loss += criterion(output, target).item()  # バッチごとの損失の合計
+            pred = output.argmax(dim=1, keepdim=True)  # 最大の確率を持つインデックスを取得
+            correct += pred.eq(target.view_as(pred)).sum().item()
+
+    test_loss /= len(test_loader.dataset)
+    accuracy = 100. * correct / len(test_loader.dataset)
+    
+    print(f"\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)\n")
+
+# デバイスの設定 (GPUがあれば使用)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+
+# エポック数
+n_epochs = 10
+
+# 学習ループ
+for epoch in range(1, n_epochs + 1):
+    train(model, device, train_loader, optimizer, epoch)
+    test(model, device, test_loader)
