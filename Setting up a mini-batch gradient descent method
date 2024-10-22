@@ -1,0 +1,50 @@
+import torch
+import torch.optim as optim
+
+# 1. 2変数関数 f(x, y) = x^2 + y^2 を定義
+def function_to_optimize(X):
+    x, y = X[0], X[1]  # 1次元テンソルなので1つずつ取り出す
+    return x**2 + y**2  # シンプルな二次関数
+
+# 2. ダミーデータの作成
+# -100から100の範囲でランダムにデータを作成
+data = torch.randn(100, 2) * 100
+
+# 3. 最適化するパラメータを初期化
+# 学習する変数 x, y の初期値
+X = torch.randn(2, requires_grad=True)  # 2変数 (x, y)
+
+# 4. ミニバッチ勾配降下法の設定
+optimizer = optim.SGD([X], lr=0.01)  # SGD (確率的勾配降下法)
+batch_size = 10  # ミニバッチサイズ
+
+# 5. ミニバッチ勾配降下法による最適化
+num_epochs = 100
+
+for epoch in range(num_epochs):
+    perm = torch.randperm(data.size(0))  # データの順序をシャッフル
+    total_loss = 0
+    
+    for i in range(0, data.size(0), batch_size):
+        batch_idx = perm[i:i + batch_size]
+        batch_data = data[batch_idx]
+
+        # 勾配をリセット
+        optimizer.zero_grad()
+
+        # 順伝搬: バッチデータに基づいて損失を計算
+        loss = function_to_optimize(X)
+
+        # 逆伝搬
+        loss.backward()
+
+        # パラメータの更新
+        optimizer.step()
+
+        total_loss += loss.item()
+
+    # エポックごとの損失を出力
+    print(f'Epoch {epoch+1}/{num_epochs}, Loss: {total_loss:.4f}, X: {X.detach().numpy()}')
+
+# 6. 結果の表示
+print(f'最終的なXの値: {X.detach().numpy()}')
