@@ -1,0 +1,68 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# シグモイド関数
+# Sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# シグモイド関数の微分
+# Derivative of sigmoid function
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# ガウス分布を用いた重みの初期化
+# Gaussian distribution (normal distribution) for weight initialization
+def initialize_weights(shape):
+    return np.random.randn(*shape) * 0.1  # 小さな値で初期化 (Gaussian distribution, small values)
+
+# 5層ニューラルネットワークの順伝播
+# Forward propagation through 5 layers
+def forward_propagation(X, weights, biases):
+    activations = [X]
+    
+    # 各層の順伝播
+    # Forward propagation through each layer
+    for i in range(len(weights)):
+        Z = np.dot(activations[-1], weights[i]) + biases[i]
+        A = sigmoid(Z)
+        activations.append(A)
+        
+    return activations
+
+# 勾配消失問題を観察
+# Observe vanishing gradient problem by plotting activations
+def plot_activations(activations):
+    plt.figure(figsize=(10, 6))
+    for i, activation in enumerate(activations[1:]):  # 入力層は除外
+        plt.subplot(1, len(activations)-1, i+1)
+        plt.hist(activation.flatten(), bins=30, range=(0, 1))
+        plt.title(f"Layer {i+1} Activations")
+        plt.xlim(0, 1)
+    plt.tight_layout()
+    plt.show()
+
+# 入力データ (正規分布からのサンプル)
+# Input data (sample from normal distribution)
+X = np.random.randn(1000, 100)  # 1000サンプル, 100次元
+
+# 各層のサイズ (5層)
+# Layer sizes (5 layers)
+layer_sizes = [100, 64, 32, 16, 8, 1]
+
+# 重みとバイアスの初期化 (ガウス分布)
+# Initialize weights and biases (Gaussian distribution)
+weights = [initialize_weights((layer_sizes[i], layer_sizes[i+1])) for i in range(len(layer_sizes)-1)]
+biases = [np.zeros((1, layer_sizes[i+1])) for i in range(len(layer_sizes)-1)]
+
+# 順伝播を実行
+# Perform forward propagation
+activations = forward_propagation(X, weights, biases)
+
+# 各層のアクティベーション分布をプロットして勾配消失を観察
+# Plot activations to observe vanishing gradient problem
+plot_activations(activations)
+
+# 最後の出力結果を表示
+# Display final output
+print("最終層の出力: ", activations[-1])
