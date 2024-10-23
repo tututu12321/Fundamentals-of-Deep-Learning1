@@ -1,0 +1,57 @@
+from scipy.optimize import minimize
+import sympy as sp
+
+# 1. Scipyの minimize 関数による最適化
+# ----------------------------------------
+
+# 目的関数 (f(x, y) = x^2 + y^2)
+def objective(vars):
+    x, y = vars
+    return x**2 + y**2
+
+# 制約条件 (x + y = 1)
+def constraint(vars):
+    x, y = vars
+    return x + y - 1
+
+# 制約条件の設定
+con = {'type': 'eq', 'fun': constraint}
+
+# 最適化の実行
+initial_guess = [0.5, 0.5]  # 初期値 (x, y)
+result = minimize(objective, initial_guess, constraints=con)
+
+# 結果の表示
+x_min_scipy, y_min_scipy = result.x  # 最適解
+f_min_scipy = result.fun  # 目的関数の最小値
+
+print(f"Scipyによる制約付き最適化結果: x = {x_min_scipy:.6f}, y = {y_min_scipy:.6f}, f(x, y) = {f_min_scipy:.6f}")
+
+
+# 2. ラグランジュの未定係数法による最適化
+# ----------------------------------------
+
+# 変数を定義
+x, y, lam = sp.symbols('x y lam')  # lam はラグランジュ乗数
+
+# 目的関数と制約条件
+f = x**2 + y**2  # 目的関数 f(x, y) = x^2 + y^2
+g = x + y - 1    # 等式制約 g(x, y) = x + y - 1 = 0
+
+# ラグランジュ関数
+L = f + lam * g  # ラグランジュ関数
+
+# 偏微分
+L_x = sp.diff(L, x)
+L_y = sp.diff(L, y)
+L_lam = sp.diff(L, lam)
+
+# 偏微分方程式を解く
+solution = sp.solve([L_x, L_y, L_lam], (x, y, lam))
+
+# 最適解の取得
+x_min_lagrange, y_min_lagrange, lam_opt = solution[x], solution[y], solution[lam]
+f_min_lagrange = f.subs({x: x_min_lagrange, y: y_min_lagrange})
+
+# 結果の表示
+print(f"ラグランジュの未定係数法による最適解: x = {x_min_lagrange}, y = {y_min_lagrange}, f(x, y) = {f_min_lagrange}")
