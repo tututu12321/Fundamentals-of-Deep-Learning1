@@ -1,0 +1,47 @@
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+
+# データの準備
+# クロック信号とD信号のサンプルデータを生成
+def generate_dff_data(sequence_length=1000):
+    clock = np.random.randint(0, 2, sequence_length)  # クロック信号 (0または1)
+    D = np.random.randint(0, 2, sequence_length)      # D信号 (0または1)
+    Q = np.zeros(sequence_length)                     # 出力Qを初期化
+    
+    for t in range(1, sequence_length):
+        if clock[t] == 1:
+            Q[t] = D[t-1]  # クロックが1のときにDの前回の値を出力Qに設定
+
+    return np.array([clock, D]).T, Q  # 入力と出力を返す
+
+# データの生成
+sequence_length = 1000
+X, y = generate_dff_data(sequence_length=sequence_length)
+
+# データをLSTM用に整形
+X = X.reshape((sequence_length, 1, 2))  # (サンプル数, 時系列の長さ, 特徴量の数)
+y = y.reshape((sequence_length, 1))     # 出力を時系列データとして整形
+
+# モデルの構築
+model = Sequential([
+    LSTM(32, input_shape=(1, 2), activation='relu'),
+    Dense(1, activation='sigmoid')
+])
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# モデルの学習
+model.fit(X, y, epochs=10, batch_size=32)
+
+# テスト用データで予測
+test_length = 100
+X_test, y_test = generate_dff_data(sequence_length=test_length)
+X_test = X_test.reshape((test_length, 1, 2))
+
+predictions = model.predict(X_test)
+
+# 結果を表示
+for i in range(test_length):
+    print(f"Clock: {X_test[i, 0, 0]}, D: {X_test[i, 0, 1]}, Predicted Q: {round(predictions[i, 0])}, True Q: {y_test[i]}")
