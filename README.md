@@ -60,11 +60,6 @@
 
 1. Google Colabで新しいノートブックを作成します。
 2. このリポジトリをColabノートブックにクローンします。
-
-   ```python
-   !git clone https://github.com/yourusername/yourrepository.git
-   ```
-   
 3. 各セクションのコードを順に実行し、モデルの学習や実験を行ってください。
 
 --- 
